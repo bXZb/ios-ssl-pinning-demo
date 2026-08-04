@@ -16,12 +16,26 @@
 		22B46E632B330D300031C568 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 22B46E622B330D300031C568 /* Alamofire */; };
 		22B46E652B330E070031C568 /* HTTPRequestModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22B46E642B330E070031C568 /* HTTPRequestModels.swift */; };
 		22F4323B2B33380300866A21 /* Certificates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22F4323A2B33380300866A21 /* Certificates.swift */; };
-		22F4323F2B3346A100866A21 /* isrg-root.der in Resources */ = {isa = PBXBuildFile; fileRef = 22F4323E2B3346A100866A21 /* isrg-root.der */; };
+		AA00000000000000000017 /* Hosts.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000016 /* Hosts.swift */; };
+		AA00000000000000000013 /* testserver-root.der in Resources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000010 /* testserver-root.der */; };
+		AA00000000000000000014 /* gts-root-r1.der in Resources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000011 /* gts-root-r1.der */; };
+		AA00000000000000000015 /* gts-wr1.der in Resources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000012 /* gts-wr1.der */; };
 		22F432482B335E3600866A21 /* TrustKit in Frameworks */ = {isa = PBXBuildFile; productRef = 22F432472B335E3600866A21 /* TrustKit */; };
 		22F4324C2B335E3600866A21 /* TrustKitStatic in Frameworks */ = {isa = PBXBuildFile; productRef = 22F4324B2B335E3600866A21 /* TrustKitStatic */; };
 		22F432502B33675000866A21 /* TrustKitURLSessionDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22F4324F2B33675000866A21 /* TrustKitURLSessionDelegate.swift */; };
 		22F432532B336F2500866A21 /* AFNetworking in Frameworks */ = {isa = PBXBuildFile; productRef = 22F432522B336F2500866A21 /* AFNetworking */; };
+		AA00000000000000000005 /* PinningDemoUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000004 /* PinningDemoUITests.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AA0000000000000000000D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 226A67802B32016F0060DF1A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 226A67872B32016F0060DF1A;
+			remoteInfo = "ios-pinning-demo";
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		22F64AA42B6025F90093AC10 /* Embed Frameworks */ = {
@@ -47,8 +61,13 @@
 		226A679C2B320A680060DF1A /* PinningURLSessionDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinningURLSessionDelegate.swift; sourceTree = "<group>"; };
 		22B46E642B330E070031C568 /* HTTPRequestModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPRequestModels.swift; sourceTree = "<group>"; };
 		22F4323A2B33380300866A21 /* Certificates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Certificates.swift; sourceTree = "<group>"; };
-		22F4323E2B3346A100866A21 /* isrg-root.der */ = {isa = PBXFileReference; lastKnownFileType = file; path = "isrg-root.der"; sourceTree = "<group>"; };
+		AA00000000000000000016 /* Hosts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hosts.swift; sourceTree = "<group>"; };
+		AA00000000000000000010 /* testserver-root.der */ = {isa = PBXFileReference; lastKnownFileType = file; path = "testserver-root.der"; sourceTree = "<group>"; };
+		AA00000000000000000011 /* gts-root-r1.der */ = {isa = PBXFileReference; lastKnownFileType = file; path = "gts-root-r1.der"; sourceTree = "<group>"; };
+		AA00000000000000000012 /* gts-wr1.der */ = {isa = PBXFileReference; lastKnownFileType = file; path = "gts-wr1.der"; sourceTree = "<group>"; };
 		22F4324F2B33675000866A21 /* TrustKitURLSessionDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustKitURLSessionDelegate.swift; sourceTree = "<group>"; };
+		AA00000000000000000002 /* ios-pinning-demoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ios-pinning-demoUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA00000000000000000004 /* PinningDemoUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinningDemoUITests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +82,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA00000000000000000007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -70,6 +96,7 @@
 			isa = PBXGroup;
 			children = (
 				226A678A2B32016F0060DF1A /* ios-pinning-demo */,
+				AA00000000000000000003 /* ios-pinning-demoUITests */,
 				226A67892B32016F0060DF1A /* Products */,
 			);
 			sourceTree = "<group>";
@@ -78,6 +105,7 @@
 			isa = PBXGroup;
 			children = (
 				226A67882B32016F0060DF1A /* ios-pinning-demo.app */,
+				AA00000000000000000002 /* ios-pinning-demoUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -88,7 +116,9 @@
 				22F432412B334EC000866A21 /* View */,
 				22F432402B334EBB00866A21 /* Model */,
 				226A67992B3206C70060DF1A /* Info.plist */,
-				22F4323E2B3346A100866A21 /* isrg-root.der */,
+				AA00000000000000000010 /* testserver-root.der */,
+				AA00000000000000000011 /* gts-root-r1.der */,
+				AA00000000000000000012 /* gts-wr1.der */,
 				226A678F2B3201720060DF1A /* Assets.xcassets */,
 				226A67912B3201720060DF1A /* Preview Content */,
 			);
@@ -110,6 +140,7 @@
 				226A679A2B32082C0060DF1A /* RequestViewModel.swift */,
 				22B46E642B330E070031C568 /* HTTPRequestModels.swift */,
 				22F4323A2B33380300866A21 /* Certificates.swift */,
+				AA00000000000000000016 /* Hosts.swift */,
 				22F4324F2B33675000866A21 /* TrustKitURLSessionDelegate.swift */,
 			);
 			path = Model;
@@ -122,6 +153,14 @@
 				226A678D2B32016F0060DF1A /* ContentView.swift */,
 			);
 			path = View;
+			sourceTree = "<group>";
+		};
+		AA00000000000000000003 /* ios-pinning-demoUITests */ = {
+			isa = PBXGroup;
+			children = (
+				AA00000000000000000004 /* PinningDemoUITests.swift */,
+			);
+			path = "ios-pinning-demoUITests";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -151,6 +190,24 @@
 			productReference = 226A67882B32016F0060DF1A /* ios-pinning-demo.app */;
 			productType = "com.apple.product-type.application";
 		};
+		AA00000000000000000001 /* ios-pinning-demoUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA00000000000000000009 /* Build configuration list for PBXNativeTarget "ios-pinning-demoUITests" */;
+			buildPhases = (
+				AA00000000000000000006 /* Sources */,
+				AA00000000000000000007 /* Frameworks */,
+				AA00000000000000000008 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AA0000000000000000000C /* PBXTargetDependency */,
+			);
+			name = "ios-pinning-demoUITests";
+			productName = "ios-pinning-demoUITests";
+			productReference = AA00000000000000000002 /* ios-pinning-demoUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -163,6 +220,9 @@
 				TargetAttributes = {
 					226A67872B32016F0060DF1A = {
 						CreatedOnToolsVersion = 15.0.1;
+					};
+					AA00000000000000000001 = {
+						TestTargetID = 226A67872B32016F0060DF1A;
 					};
 				};
 			};
@@ -185,6 +245,7 @@
 			projectRoot = "";
 			targets = (
 				226A67872B32016F0060DF1A /* ios-pinning-demo */,
+				AA00000000000000000001 /* ios-pinning-demoUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -196,7 +257,16 @@
 			files = (
 				226A67932B3201720060DF1A /* Preview Assets.xcassets in Resources */,
 				226A67902B3201720060DF1A /* Assets.xcassets in Resources */,
-				22F4323F2B3346A100866A21 /* isrg-root.der in Resources */,
+				AA00000000000000000013 /* testserver-root.der in Resources */,
+				AA00000000000000000014 /* gts-root-r1.der in Resources */,
+				AA00000000000000000015 /* gts-wr1.der in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA00000000000000000008 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -214,10 +284,27 @@
 				22F432502B33675000866A21 /* TrustKitURLSessionDelegate.swift in Sources */,
 				226A679D2B320A680060DF1A /* PinningURLSessionDelegate.swift in Sources */,
 				22F4323B2B33380300866A21 /* Certificates.swift in Sources */,
+				AA00000000000000000017 /* Hosts.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA00000000000000000006 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA00000000000000000005 /* PinningDemoUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AA0000000000000000000C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 226A67872B32016F0060DF1A /* ios-pinning-demo */;
+			targetProxy = AA0000000000000000000D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		226A67942B3201720060DF1A /* Debug */ = {
@@ -272,7 +359,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -329,7 +416,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -347,7 +434,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"ios-pinning-demo/Preview Content\"";
-				DEVELOPMENT_TEAM = 8LCZSXKVZY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "ios-pinning-demo/Info.plist";
@@ -356,7 +442,7 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -378,7 +464,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"ios-pinning-demo/Preview Content\"";
-				DEVELOPMENT_TEAM = 8LCZSXKVZY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "ios-pinning-demo/Info.plist";
@@ -387,7 +472,7 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -398,6 +483,40 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		AA0000000000000000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.httptoolkit.ios-pinning-demo.uitests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "ios-pinning-demo";
+			};
+			name = Debug;
+		};
+		AA0000000000000000000B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.httptoolkit.ios-pinning-demo.uitests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "ios-pinning-demo";
 			};
 			name = Release;
 		};
@@ -422,6 +541,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		AA00000000000000000009 /* Build configuration list for PBXNativeTarget "ios-pinning-demoUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000000000000000000A /* Debug */,
+				AA0000000000000000000B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -429,8 +557,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/Alamofire/Alamofire.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.8.1;
+				kind = upToNextMinorVersion;
+				minimumVersion = 5.10.2;
 			};
 		};
 		22F432462B335E3600866A21 /* XCRemoteSwiftPackageReference "TrustKit" */ = {
@@ -438,7 +566,7 @@
 			repositoryURL = "https://github.com/datatheorem/TrustKit";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 3.0.3;
+				minimumVersion = 3.0.7;
 			};
 		};
 		22F432512B336F2500866A21 /* XCRemoteSwiftPackageReference "AFNetworking" */ = {

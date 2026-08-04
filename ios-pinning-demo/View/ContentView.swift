@@ -46,9 +46,7 @@ struct RequestButtonView: View {
 
     var body: some View {
         Button(action: {
-            if (request.isAvailable()) {
-                viewModel.sendRequest(request)
-            }
+            viewModel.sendRequest(request)
         }) {
             HStack {
                 Spacer().frame(width: 16)
@@ -66,11 +64,6 @@ struct RequestButtonView: View {
 
                 if request.isLoading {
                     ProgressView()
-                } else if !request.isAvailable() {
-                    VStack {
-                        Text(request.name)
-                        Text("(Not available)")
-                    }
                 } else {
                     Text(request.name)
                 }
@@ -82,12 +75,13 @@ struct RequestButtonView: View {
                 Spacer().frame(width: 16)
             }
             .frame(maxWidth: .infinity, minHeight: 44)
-            .disabled(!request.isAvailable())
         }
+        // The button's colour is the status for a human, but UI tests can't read colours, so we
+        // publish it as an accessibility value too:
+        .accessibilityIdentifier(request.name)
+        .accessibilityValue(request.status.description)
         .background(
-            request.isAvailable() == false
-                ? Color.gray
-            : request.status == .none
+            request.status == .none
                 ? Color.purple
             : request.status == .success
                 ? Color.green

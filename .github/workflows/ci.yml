@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  # The pinned certificate chains are outside our control, so check weekly that they still match,
+  # rather than finding out when somebody tries to use the demo:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    # Xcode 16 is the newest with simulators old enough to cover our iOS 15 deployment target, and
+    # Alamofire 5.11+ would require a Swift 6.3 toolchain, so this pairing is deliberate.
+    runs-on: macos-15
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Select Xcode
+        run: sudo xcode-select -switch /Applications/Xcode_16.4.app
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcrun simctl list runtimes
+
+      - name: Resolve dependencies
+        run: xcodebuild -resolvePackageDependencies -project ios-pinning-demo.xcodeproj
+
+      - name: Build and run tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project ios-pinning-demo.xcodeproj \
+            -scheme ios-pinning-demo \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcbeautify
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-results
+          path: TestResults.xcresult

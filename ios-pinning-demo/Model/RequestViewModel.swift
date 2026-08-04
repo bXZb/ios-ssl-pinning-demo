@@ -2,49 +2,55 @@ import Foundation
 
 class RequestViewModel: ObservableObject {
     @Published var unpinnedRequests: [BaseHTTPRequest] = [
-        // We use amiusing.httptoolkit.tech for unpinned requests:
-        SimpleHTTPRequest(name: "Plain HTTP", url: "http://amiusing.httptoolkit.tech"),
-        SimpleHTTPRequest(name: "HTTPS", url: "https://amiusing.httptoolkit.tech"),
-        AlamofireSimpleHTTPRequest(name: "Alamofire HTTPS", url: "https://amiusing.httptoolkit.tech"),
-        AFNetworkingSimpleHTTPRequest(name: "AFNetworking HTTPS", url: "https://amiusing.httptoolkit.tech")
+        SimpleHTTPRequest(name: "Plain HTTP", url: "http://\(UNPINNED_HOST)"),
+        SimpleHTTPRequest(name: "HTTPS", url: "https://\(UNPINNED_HOST)"),
+        AlamofireSimpleHTTPRequest(name: "Alamofire HTTPS", url: "https://\(UNPINNED_HOST)"),
+        AFNetworkingSimpleHTTPRequest(name: "AFNetworking HTTPS", url: "https://\(UNPINNED_HOST)")
     ]
-    
+
     @Published var pinnedRequests: [BaseHTTPRequest] = [
-        // We use sha256.badssl.com for config-pinned (in Info.plist NSPinnedDomains) requests:
-        SimpleHTTPRequest(name: "Config-based pinning", url: "https://sha256.badssl.com"),
-        
-        // We use ecc384.badssl.com for all manually-pinned requests:
+        // Pinned by ATS, in Info.plist:
+        SimpleHTTPRequest(name: "Config-based pinning", url: "https://\(CONFIG_PINNED_HOST)"),
+
+        // The only case pinning testserver.host's own CA, as it's the only one where we can
+        // install that root as an extra trust anchor ourselves:
         URLSessionPinnedRequest(
             name: "URLSession pinning",
-            url: "https://ecc384.badssl.com",
-            // Pinned on hash of raw PK - fiddly to format to match pins elsewhere:
-            pinnedCertificate: "9Fk6HgfMnM7/vtnBHcUhg1b3gU2bIpSd50XmKZkMbGA="
+            url: "https://\(URLSESSION_PINNED_HOST)",
+            pinnedCertificate: TESTSERVER_ROOT_RAW_KEY_SHA256,
+            extraAnchors: [BundledCertificates.testserverRootCert]
         ),
-        
+
         AlamofirePinnedCertHTTPRequest(
             name: "Alamofire cert pinning",
-            url: "https://ecc384.badssl.com",
-            pinnedCertificate: BundledCertificates.isrgRootCert
+            url: "https://\(ALAMOFIRE_CERT_PINNED_HOST)",
+            pinnedCertificates: BundledCertificates.publicChainCerts
         ),
-        
+
         AlamofirePinnedPKHTTPRequest(
             name: "Alamofire PK pinning",
-            url: "https://ecc384.badssl.com",
-            pinnedKey: SecCertificateCopyKey(BundledCertificates.isrgRootCert)!
+            url: "https://\(ALAMOFIRE_PK_PINNED_HOST)",
+            pinnedKeys: BundledCertificates.publicChainCerts.map { SecCertificateCopyKey($0)! }
         ),
-        
+
         AFNetworkingPinnedHTTPRequest(
             name: "AFNetworking cert pinning",
-            url: "https://ecc384.badssl.com",
-            pinnedCertificate: BundledCertificates.isrgRootCert
+            url: "https://\(AFNETWORKING_PINNED_HOST)",
+            pinnedCertificates: BundledCertificates.publicChainCerts
         ),
-        
+
         TrustKitPinnedHTTPRequest(
             name: "TrustKit pinning"
-            // TrustKit uses global configuration, configured to pin ecc384.badssl.com
+            // TrustKit uses global configuration, configured to pin TRUSTKIT_PINNED_HOST
         )
+
+        // ??? Webview pinning?
+        // ??? CT libraries?
+        // ??? Manual checks with SecTrustEvaulate / SecTrustSetAnchorCertificates - think covered by URLSession case?
+        // ??? CFNetwork?
+        // ??? NEF? Probably too low-level I think
     ]
-    
+
     func sendRequest(_ httpRequest: BaseHTTPRequest) {
         Task {
             await httpRequest.run()
@@ -52,6 +58,14 @@ class RequestViewModel: ObservableObject {
     }
 }
 
-enum RequestStatus {
+enum RequestStatus: CustomStringConvertible {
     case none, success, failure
+
+    var description: String {
+        switch self {
+            case .none: return "pending"
+            case .success: return "success"
+            case .failure: return "failure"
+        }
+    }
 }

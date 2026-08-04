@@ -1,28 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+	Only the hostnames below have any ATS config at all. Each button uses its own hostname, so
+	nothing configured here can leak across into another button's request.
+-->
 <plist version="1.0">
 <dict>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSExceptionDomains</key>
 		<dict>
-			<key>amiusing.httptoolkit.tech</key>
+			<!-- Allows the plain HTTP button. Nothing else uses this host. -->
+			<key>testserver.host</key>
 			<dict>
+				<key>NSIncludesSubdomains</key>
+				<false/>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
 				<true/>
 			</dict>
 		</dict>
 		<key>NSPinnedDomains</key>
 		<dict>
-			<key>sha256.badssl.com</key>
+			<!--
+				ATS pinning is applied in addition to normal trust evaluation, not instead of it,
+				so this has to be a publicly trusted host - unlike Android, iOS has no way to
+				declare an extra trust anchor here. That suits the demo: the system still trusts
+				an interception certificate, leaving these pins as the thing that rejects it.
+
+				Pinned by public key (SPKI) so that cross-signing a certificate doesn't break the
+				pin, and against both the root and the intermediate so that rotating either one
+				still leaves a valid pin.
+			-->
+			<key>http1--http2--tls-v1-2--tls-v1-3.testserver.host</key>
 			<dict>
 				<key>NSIncludesSubdomains</key>
 				<false/>
 				<key>NSPinnedCAIdentities</key>
 				<array>
 					<dict>
+						<!-- GTS Root R1 -->
 						<key>SPKI-SHA256-BASE64</key>
-						<string>C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=</string>
+						<string>hxqRlPTu1bMS/0DITB1SSu0vd4u/8l8TjPgfaAp63Gc=</string>
+					</dict>
+					<dict>
+						<!-- GTS WR1, the issuing intermediate -->
+						<key>SPKI-SHA256-BASE64</key>
+						<string>yDu9og255NN5GEf+Bwa9rTrqFQ0EydZ0r1FCh9TdAW4=</string>
 					</dict>
 				</array>
 			</dict>

@@ -46,10 +46,6 @@ class BaseHTTPRequest: Identifiable, ObservableObject {
         }
     }
     
-    func isAvailable() -> Bool {
-        return true
-    }
-
     func performRequest() async throws -> Int {
         preconditionFailure("performRequest must be overloaded for each case")
     }
@@ -75,35 +71,28 @@ class SimpleHTTPRequest: BaseHTTPRequest {
 }
 
 class URLSessionPinnedRequest: SimpleHTTPRequest {
-    
+
     let pinnedCertificate: String
-    
-    init(name: String, url: String, pinnedCertificate: String) {
+    let extraAnchors: [SecCertificate]
+
+    init(name: String, url: String, pinnedCertificate: String, extraAnchors: [SecCertificate] = []) {
         self.pinnedCertificate = pinnedCertificate
+        self.extraAnchors = extraAnchors
         super.init(name: name, url: url)
     }
-    
-    override func isAvailable() -> Bool {
-        if #available(iOS 15.0, *) {
-            return true
-        } else {
-            return false
-        }
-    }
-    
+
     override func buildSession() -> URLSession {
-        if #available(iOS 15.0, *) {
-            let delegate = PinningURLSessionDelegate(pinnedCertificate: pinnedCertificate)
-            return URLSession(
-                configuration: .default,
-                delegate: delegate,
-                delegateQueue: nil
-            )
-        } else {
-            fatalError("URLSessionPinnedRequest is not available before iOS 15")
-        }
+        let delegate = PinningURLSessionDelegate(
+            pinnedCertificate: pinnedCertificate,
+            extraAnchors: extraAnchors
+        )
+        return URLSession(
+            configuration: .default,
+            delegate: delegate,
+            delegateQueue: nil
+        )
     }
-    
+
 }
 
 class AlamofireBaseHTTPRequest: BaseHTTPRequest {
@@ -151,14 +140,16 @@ class AlamofireSimpleHTTPRequest: AlamofireBaseHTTPRequest {
 
 class AlamofirePinnedCertHTTPRequest: AlamofireBaseHTTPRequest {
     
-    init(name: String, url: String, pinnedCertificate: SecCertificate) {
+    init(name: String, url: String, pinnedCertificates: [SecCertificate]) {
+        // acceptSelfSignedCertificates would install these as the only trust anchors, so an
+        // interception certificate would fail chain validation before the pin was ever compared.
         let evaluators = [URL(string: url)!.host!: PinnedCertificatesTrustEvaluator(
-            certificates: [pinnedCertificate],
+            certificates: pinnedCertificates,
             acceptSelfSignedCertificates: false,
             performDefaultValidation: true,
             validateHost: true
         )]
-        
+
         super.init(name: name, url: url, evaluators: evaluators)
     }
     
@@ -166,13 +157,13 @@ class AlamofirePinnedCertHTTPRequest: AlamofireBaseHTTPRequest {
 
 class AlamofirePinnedPKHTTPRequest: AlamofireBaseHTTPRequest {
     
-    init(name: String, url: String, pinnedKey: SecKey) {
+    init(name: String, url: String, pinnedKeys: [SecKey]) {
         let evaluators = [URL(string: url)!.host!: PublicKeysTrustEvaluator(
-            keys: [pinnedKey],
+            keys: pinnedKeys,
             performDefaultValidation: true,
             validateHost: true
         )]
-        
+
         super.init(name: name, url: url, evaluators: evaluators)
     }
     
@@ -183,9 +174,9 @@ var trustKitInitialized = false
 class TrustKitPinnedHTTPRequest: SimpleHTTPRequest {
     
     init(name: String) {
-        super.init(name: name, url: "https://ecc384.badssl.com")
+        super.init(name: name, url: "https://\(TRUSTKIT_PINNED_HOST)")
     }
-    
+
     override func buildSession() -> URLSession {
         // Initialize when first clicked:
         if (!trustKitInitialized) {
@@ -193,11 +184,12 @@ class TrustKitPinnedHTTPRequest: SimpleHTTPRequest {
                 kTSKSwizzleNetworkDelegates: false,
                 kTSKEnforcePinning: true,
                 kTSKPinnedDomains: [
-                    "ecc384.badssl.com": [
+                    TRUSTKIT_PINNED_HOST: [
+                        // TrustKit requires a backup pin, so we pin both the root and the
+                        // intermediate rather than padding the list with a dud:
                         kTSKPublicKeyHashes: [
-                            "C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=",
-                            // A backup pin is required, so we add a dud:
-                            "ABCABCABCABCABCABCABCABCABCABCABCABCABCABCA="
+                            GTS_ROOT_R1_SPKI_SHA256,
+                            GTS_INTERMEDIATE_SPKI_SHA256
                         ]
                     ]
                 ]
@@ -241,23 +233,23 @@ class AFNetworkingSimpleHTTPRequest: BaseHTTPRequest {
 
 class AFNetworkingPinnedHTTPRequest: AFNetworkingSimpleHTTPRequest {
     
-    let pinnedCertificate: SecCertificate
-    
-    init(name: String, url: String, pinnedCertificate: SecCertificate) {
-        self.pinnedCertificate = pinnedCertificate
+    let pinnedCertificates: [SecCertificate]
+
+    init(name: String, url: String, pinnedCertificates: [SecCertificate]) {
+        self.pinnedCertificates = pinnedCertificates
         super.init(name: name, url: url)
     }
-    
+
     override func buildManager() -> AFHTTPSessionManager {
         let manager = super.buildManager()
-        
+
         let securityPolicy = AFSecurityPolicy(pinningMode: .certificate)
         securityPolicy.pinnedCertificates = Set(
-            [SecCertificateCopyData(self.pinnedCertificate)] as! [Data]
+            self.pinnedCertificates.map { SecCertificateCopyData($0) } as! [Data]
         )
         securityPolicy.validatesDomainName = true
         manager.securityPolicy = securityPolicy
-        
+
         return manager
     }
 
