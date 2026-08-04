@@ -37,5 +37,7 @@ let GTS_INTERMEDIATE_SPKI_SHA256 = "yDu9og255NN5GEf+Bwa9rTrqFQ0EydZ0r1FCh9TdAW4=
 
 // SHA-256 of the raw key as SecKeyCopyExternalRepresentation returns it (PKCS#1 for RSA), which is
 // what our own delegate compares against. Fiddly to format to match the pins above, but it keeps
-// that delegate's code to just the Security APIs:
+// that delegate's code to just the Security APIs. Both the root and the intermediate, so that
+// either one being rotated still leaves a valid pin:
 let TESTSERVER_ROOT_RAW_KEY_SHA256 = "Xg2CpDrIW0Vni47R5mXbrsAi98KvuuzxhCaVyd//Vj4="
+let TESTSERVER_INTERMEDIATE_RAW_KEY_SHA256 = "Xi1YcDF35CwFeuPLEAezmu0TX+JZcXK2rZXo21SUj/g="

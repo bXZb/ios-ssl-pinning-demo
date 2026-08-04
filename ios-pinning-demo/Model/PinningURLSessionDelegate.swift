@@ -2,11 +2,11 @@ import Foundation
 import CryptoKit
 
 class PinningURLSessionDelegate: NSObject, URLSessionDelegate {
-    var pinnedCertificate: String
+    var pinnedKeyHashes: [String]
     var extraAnchors: [SecCertificate]
 
-    init(pinnedCertificate: String, extraAnchors: [SecCertificate] = []) {
-        self.pinnedCertificate = pinnedCertificate
+    init(pinnedKeyHashes: [String], extraAnchors: [SecCertificate] = []) {
+        self.pinnedKeyHashes = pinnedKeyHashes
         self.extraAnchors = extraAnchors
     }
 
@@ -28,31 +28,50 @@ class PinningURLSessionDelegate: NSObject, URLSessionDelegate {
             SecTrustSetAnchorCertificatesOnly(serverTrust, false)
         }
 
-        if SecTrustEvaluateWithError(serverTrust, nil) {
-            if let certificateChain = SecTrustCopyCertificateChain(serverTrust) as? [SecCertificate] {
-                for serverCertificate in certificateChain {
-                    guard let publicKey = SecCertificateCopyKey(serverCertificate) else {
-                        print("Error reading public key from certificate")
-                        continue
-                    }
+        var trustError: CFError?
+        guard SecTrustEvaluateWithError(serverTrust, &trustError) else {
+            print("Pinning: chain validation failed: \(trustError.map { $0 as Error }.debugDescription)")
+            completionHandler(.cancelAuthenticationChallenge, nil)
+            return
+        }
 
-                    var error: Unmanaged<CFError>?
-                    guard let publicKeyData = SecKeyCopyExternalRepresentation(publicKey, &error) as Data? else {
-                        print("Error retrieving public key data: \(error!.takeRetainedValue() as Error)")
-                        return
-                    }
+        guard let certificateChain = SecTrustCopyCertificateChain(serverTrust) as? [SecCertificate] else {
+            print("Pinning: could not read the validated certificate chain")
+            completionHandler(.cancelAuthenticationChallenge, nil)
+            return
+        }
 
-                    let publicKeyHash = SHA256.hash(data: publicKeyData)
-                    let publicKeyHashBase64 = Data(publicKeyHash).base64EncodedString()
+        // Walk from the anchor down to the leaf. A pinned CA then matches before we ever try to
+        // export the leaf's key, which matters because not every key is exportable - see below.
+        for serverCertificate in certificateChain.reversed() {
+            guard let publicKeyHash = hashPublicKey(of: serverCertificate) else { continue }
 
-                    if publicKeyHashBase64 == pinnedCertificate {
-                        completionHandler(.useCredential, URLCredential(trust: serverTrust))
-                        return
-                    }
-                }
+            if pinnedKeyHashes.contains(publicKeyHash) {
+                completionHandler(.useCredential, URLCredential(trust: serverTrust))
+                return
             }
         }
 
+        print("Pinning: no pinned key found in chain of \(certificateChain.count): " +
+              certificateChain.map { hashPublicKey(of: $0) ?? "<unreadable>" }.joined(separator: ", "))
         completionHandler(.cancelAuthenticationChallenge, nil)
+    }
+
+    /// SHA-256 of the key as SecKeyCopyExternalRepresentation returns it (PKCS#1 for RSA).
+    /// Returns nil rather than throwing: a key we can't read is just one we can't match against,
+    /// and skipping it must not abandon the rest of the chain.
+    private func hashPublicKey(of certificate: SecCertificate) -> String? {
+        guard let publicKey = SecCertificateCopyKey(certificate) else {
+            print("Pinning: could not read public key from certificate")
+            return nil
+        }
+
+        var error: Unmanaged<CFError>?
+        guard let publicKeyData = SecKeyCopyExternalRepresentation(publicKey, &error) as Data? else {
+            print("Pinning: could not export public key: \(error!.takeRetainedValue() as Error)")
+            return nil
+        }
+
+        return Data(SHA256.hash(data: publicKeyData)).base64EncodedString()
     }
 }

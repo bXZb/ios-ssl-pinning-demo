@@ -11,20 +11,16 @@ on:
 
 jobs:
   build-and-test:
-    # Xcode 16 is the newest with simulators old enough to cover our iOS 15 deployment target, and
-    # Alamofire 5.11+ would require a Swift 6.3 toolchain, so this pairing is deliberate.
     runs-on: macos-15
 
     steps:
       - uses: actions/checkout@v5
 
-      - name: Select Xcode
-        run: sudo xcode-select -switch /Applications/Xcode_16.4.app
-
       - name: Show toolchain
         run: |
+          echo "DEVELOPER_DIR=${DEVELOPER_DIR:-<unset>}"
           xcodebuild -version
-          xcrun simctl list runtimes
+          xcrun simctl list runtimes | grep -i ios
 
       - name: Resolve dependencies
         run: xcodebuild -resolvePackageDependencies -project ios-pinning-demo.xcodeproj
@@ -39,11 +35,22 @@ jobs:
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -resultBundlePath TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO \
-            | xcbeautify
+            2>&1 | tee xcodebuild.log | xcbeautify
+
+      # xcbeautify hides the app's own output, which is where the pinning failure reasons are:
+      - name: Explain failures
+        if: failure()
+        run: |
+          echo "--- pinning diagnostics and request errors ---"
+          grep -aE "Pinning:|failed with:|XCTAssert" xcodebuild.log | tail -60 || true
+          echo "--- build/test errors ---"
+          grep -aE "^.*(error|Failing tests):" xcodebuild.log | tail -40 || true
 
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@v5
         with:
           name: test-results
-          path: TestResults.xcresult
+          path: |
+            TestResults.xcresult
+            xcodebuild.log

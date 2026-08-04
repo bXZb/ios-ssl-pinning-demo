@@ -17,7 +17,10 @@ class RequestViewModel: ObservableObject {
         URLSessionPinnedRequest(
             name: "URLSession pinning",
             url: "https://\(URLSESSION_PINNED_HOST)",
-            pinnedCertificate: TESTSERVER_ROOT_RAW_KEY_SHA256,
+            pinnedKeyHashes: [
+                TESTSERVER_ROOT_RAW_KEY_SHA256,
+                TESTSERVER_INTERMEDIATE_RAW_KEY_SHA256
+            ],
             extraAnchors: [BundledCertificates.testserverRootCert]
         ),
 

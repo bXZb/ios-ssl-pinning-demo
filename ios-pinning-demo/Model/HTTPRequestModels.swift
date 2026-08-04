@@ -72,18 +72,18 @@ class SimpleHTTPRequest: BaseHTTPRequest {
 
 class URLSessionPinnedRequest: SimpleHTTPRequest {
 
-    let pinnedCertificate: String
+    let pinnedKeyHashes: [String]
     let extraAnchors: [SecCertificate]
 
-    init(name: String, url: String, pinnedCertificate: String, extraAnchors: [SecCertificate] = []) {
-        self.pinnedCertificate = pinnedCertificate
+    init(name: String, url: String, pinnedKeyHashes: [String], extraAnchors: [SecCertificate] = []) {
+        self.pinnedKeyHashes = pinnedKeyHashes
         self.extraAnchors = extraAnchors
         super.init(name: name, url: url)
     }
 
     override func buildSession() -> URLSession {
         let delegate = PinningURLSessionDelegate(
-            pinnedCertificate: pinnedCertificate,
+            pinnedKeyHashes: pinnedKeyHashes,
             extraAnchors: extraAnchors
         )
         return URLSession(
