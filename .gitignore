@@ -1,9 +1,15 @@
+.DS_Store
+
 # Xcode
 #
 # gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
 
 ## User settings
 xcuserdata/
+*.xcresult
+
+## Written by Xcode on open, and empty unless a workspace setting is actually changed
+WorkspaceSettings.xcsettings
 
 ## compatibility with Xcode 8 and earlier (ignoring not required starting Xcode 9)
 *.xcscmblueprint
