@@ -1,18 +1,23 @@
 import Foundation
 import CryptoKit
 
+// Pinning done by hand, against the public key of any certificate in the chain.
+//
+// Note that this only works against a publicly trusted host. ATS evaluates the chain while
+// establishing the connection, and for a chain it doesn't trust it fails the handshake outright
+// without ever raising an authentication challenge - so a delegate like this never runs, and
+// cannot be used to trust a private CA. Doing that on iOS requires an ATS exception for the
+// domain, unlike Android, where the network security config can name an extra trust anchor.
+
 class PinningURLSessionDelegate: NSObject, URLSessionDelegate {
     var pinnedKeyHashes: [String]
-    var extraAnchors: [SecCertificate]
     var onDiagnostic: (String) -> Void
 
     init(
         pinnedKeyHashes: [String],
-        extraAnchors: [SecCertificate] = [],
         onDiagnostic: @escaping (String) -> Void = { print($0) }
     ) {
         self.pinnedKeyHashes = pinnedKeyHashes
-        self.extraAnchors = extraAnchors
         self.onDiagnostic = onDiagnostic
     }
 
@@ -21,32 +26,19 @@ class PinningURLSessionDelegate: NSObject, URLSessionDelegate {
         didReceive challenge: URLAuthenticationChallenge,
         completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?
     ) -> Void) {
+        // Logged so that a failure without this line is recognisable as "we were never asked",
+        // which is what an ATS rejection looks like from in here:
+        onDiagnostic("server trust challenge received")
+
         guard let serverTrust = challenge.protectionSpace.serverTrust else {
+            onDiagnostic("challenge carried no server trust")
             completionHandler(.cancelAuthenticationChallenge, nil)
             return
-        }
-
-        if !extraAnchors.isEmpty {
-            SecTrustSetAnchorCertificates(serverTrust, extraAnchors as CFArray)
-            // Keep the system anchors trusted alongside ours. Otherwise an interception
-            // certificate is rejected while building the chain, and the pin check below - the
-            // thing this class exists to demonstrate - never runs at all.
-            SecTrustSetAnchorCertificatesOnly(serverTrust, false)
         }
 
         var trustError: CFError?
         guard SecTrustEvaluateWithError(serverTrust, &trustError) else {
             onDiagnostic("chain validation failed: \(trustError.map { String(describing: $0) } ?? "unknown")")
-
-            // Distinguish "our anchor was ignored" from "the chain is unacceptable regardless":
-            // if trusting only our anchor succeeds, then keeping the system anchors alongside is
-            // what's rejecting this, rather than anything about the certificate itself.
-            if !extraAnchors.isEmpty {
-                SecTrustSetAnchorCertificatesOnly(serverTrust, true)
-                let anchorsOnlyWorks = SecTrustEvaluateWithError(serverTrust, nil)
-                onDiagnostic("with anchorCertificatesOnly=true it \(anchorsOnlyWorks ? "SUCCEEDS" : "still fails")")
-            }
-
             completionHandler(.cancelAuthenticationChallenge, nil)
             return
         }
@@ -57,8 +49,8 @@ class PinningURLSessionDelegate: NSObject, URLSessionDelegate {
             return
         }
 
-        // Walk from the anchor down to the leaf. A pinned CA then matches before we ever try to
-        // export the leaf's key, which matters because not every key is exportable - see below.
+        // Walk from the anchor down to the leaf, so a pinned CA matches before we try to export
+        // the leaf's key - not every key is exportable, see hashPublicKey below.
         for serverCertificate in certificateChain.reversed() {
             guard let publicKeyHash = hashPublicKey(of: serverCertificate) else { continue }
 

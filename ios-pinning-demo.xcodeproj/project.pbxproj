@@ -17,7 +17,6 @@
 		22B46E652B330E070031C568 /* HTTPRequestModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22B46E642B330E070031C568 /* HTTPRequestModels.swift */; };
 		22F4323B2B33380300866A21 /* Certificates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22F4323A2B33380300866A21 /* Certificates.swift */; };
 		AA00000000000000000017 /* Hosts.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000016 /* Hosts.swift */; };
-		AA00000000000000000013 /* testserver-root.der in Resources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000010 /* testserver-root.der */; };
 		AA00000000000000000014 /* gts-root-r1.der in Resources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000011 /* gts-root-r1.der */; };
 		AA00000000000000000015 /* gts-wr1.der in Resources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000012 /* gts-wr1.der */; };
 		22F432482B335E3600866A21 /* TrustKit in Frameworks */ = {isa = PBXBuildFile; productRef = 22F432472B335E3600866A21 /* TrustKit */; };
@@ -62,7 +61,6 @@
 		22B46E642B330E070031C568 /* HTTPRequestModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPRequestModels.swift; sourceTree = "<group>"; };
 		22F4323A2B33380300866A21 /* Certificates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Certificates.swift; sourceTree = "<group>"; };
 		AA00000000000000000016 /* Hosts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hosts.swift; sourceTree = "<group>"; };
-		AA00000000000000000010 /* testserver-root.der */ = {isa = PBXFileReference; lastKnownFileType = file; path = "testserver-root.der"; sourceTree = "<group>"; };
 		AA00000000000000000011 /* gts-root-r1.der */ = {isa = PBXFileReference; lastKnownFileType = file; path = "gts-root-r1.der"; sourceTree = "<group>"; };
 		AA00000000000000000012 /* gts-wr1.der */ = {isa = PBXFileReference; lastKnownFileType = file; path = "gts-wr1.der"; sourceTree = "<group>"; };
 		22F4324F2B33675000866A21 /* TrustKitURLSessionDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustKitURLSessionDelegate.swift; sourceTree = "<group>"; };
@@ -116,7 +114,6 @@
 				22F432412B334EC000866A21 /* View */,
 				22F432402B334EBB00866A21 /* Model */,
 				226A67992B3206C70060DF1A /* Info.plist */,
-				AA00000000000000000010 /* testserver-root.der */,
 				AA00000000000000000011 /* gts-root-r1.der */,
 				AA00000000000000000012 /* gts-wr1.der */,
 				226A678F2B3201720060DF1A /* Assets.xcassets */,
@@ -257,7 +254,6 @@
 			files = (
 				226A67932B3201720060DF1A /* Preview Assets.xcassets in Resources */,
 				226A67902B3201720060DF1A /* Assets.xcassets in Resources */,
-				AA00000000000000000013 /* testserver-root.der in Resources */,
 				AA00000000000000000014 /* gts-root-r1.der in Resources */,
 				AA00000000000000000015 /* gts-wr1.der in Resources */,
 			);

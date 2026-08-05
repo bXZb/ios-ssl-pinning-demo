@@ -12,16 +12,13 @@ class RequestViewModel: ObservableObject {
         // Pinned by ATS, in Info.plist:
         SimpleHTTPRequest(name: "Config-based pinning", url: "https://\(CONFIG_PINNED_HOST)"),
 
-        // The only case pinning testserver.host's own CA, as it's the only one where we can
-        // install that root as an extra trust anchor ourselves:
         URLSessionPinnedRequest(
             name: "URLSession pinning",
             url: "https://\(URLSESSION_PINNED_HOST)",
             pinnedKeyHashes: [
-                TESTSERVER_ROOT_RAW_KEY_SHA256,
-                TESTSERVER_INTERMEDIATE_RAW_KEY_SHA256
-            ],
-            extraAnchors: [BundledCertificates.testserverRootCert]
+                GTS_ROOT_R1_RAW_KEY_SHA256,
+                GTS_INTERMEDIATE_RAW_KEY_SHA256
+            ]
         ),
 
         AlamofirePinnedCertHTTPRequest(
