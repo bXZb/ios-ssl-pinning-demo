@@ -12,33 +12,46 @@ class BaseHTTPRequest: Identifiable, ObservableObject {
     @Published var isLoading = false
     @Published var status: RequestStatus = .none
 
+    // Why a failed request failed. Surfaced through the UI (see ContentView) as well as the
+    // console, because UI tests run the app as a separate process and never see its stdout.
+    @Published var diagnostics: String = ""
+
     init(name: String, url: String) {
         self.name = name
         self.url = url
     }
-    
+
+    func addDiagnostic(_ message: String) {
+        print("\(name): \(message)")
+
+        DispatchQueue.main.async {
+            self.diagnostics += (self.diagnostics.isEmpty ? "" : " | ") + message
+        }
+    }
+
     func run() async {
         URLCache.shared.removeAllCachedResponses()
-        
+
         DispatchQueue.main.async {
             self.isLoading = true
             self.status = .none
+            self.diagnostics = ""
         }
-        
+
         do {
             let status = try await performRequest()
-            
+
             if (status != 200) {
                 throw URLError(.badServerResponse)
             }
-            
+
             DispatchQueue.main.async {
                 self.status = .success
                 self.isLoading = false
             }
         } catch {
-            print("\(name) failed with: \(error)")
-            
+            addDiagnostic("failed with \(error)")
+
             DispatchQueue.main.async {
                 self.isLoading = false
                 self.status = .failure
@@ -84,7 +97,8 @@ class URLSessionPinnedRequest: SimpleHTTPRequest {
     override func buildSession() -> URLSession {
         let delegate = PinningURLSessionDelegate(
             pinnedKeyHashes: pinnedKeyHashes,
-            extraAnchors: extraAnchors
+            extraAnchors: extraAnchors,
+            onDiagnostic: { [weak self] message in self?.addDiagnostic(message) }
         )
         return URLSession(
             configuration: .default,

@@ -77,9 +77,14 @@ struct RequestButtonView: View {
             .frame(maxWidth: .infinity, minHeight: 44)
         }
         // The button's colour is the status for a human, but UI tests can't read colours, so we
-        // publish it as an accessibility value too:
+        // publish it as an accessibility value too - along with why a request failed, since a UI
+        // test runs the app out of process and so never sees anything it logs.
         .accessibilityIdentifier(request.name)
-        .accessibilityValue(request.status.description)
+        .accessibilityValue(
+            request.status == .failure && !request.diagnostics.isEmpty
+                ? "\(request.status.description): \(request.diagnostics)"
+                : request.status.description
+        )
         .background(
             request.status == .none
                 ? Color.purple

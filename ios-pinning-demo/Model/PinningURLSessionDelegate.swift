@@ -4,10 +4,16 @@ import CryptoKit
 class PinningURLSessionDelegate: NSObject, URLSessionDelegate {
     var pinnedKeyHashes: [String]
     var extraAnchors: [SecCertificate]
+    var onDiagnostic: (String) -> Void
 
-    init(pinnedKeyHashes: [String], extraAnchors: [SecCertificate] = []) {
+    init(
+        pinnedKeyHashes: [String],
+        extraAnchors: [SecCertificate] = [],
+        onDiagnostic: @escaping (String) -> Void = { print($0) }
+    ) {
         self.pinnedKeyHashes = pinnedKeyHashes
         self.extraAnchors = extraAnchors
+        self.onDiagnostic = onDiagnostic
     }
 
     func urlSession(
@@ -30,13 +36,23 @@ class PinningURLSessionDelegate: NSObject, URLSessionDelegate {
 
         var trustError: CFError?
         guard SecTrustEvaluateWithError(serverTrust, &trustError) else {
-            print("Pinning: chain validation failed: \(trustError.map { $0 as Error }.debugDescription)")
+            onDiagnostic("chain validation failed: \(trustError.map { String(describing: $0) } ?? "unknown")")
+
+            // Distinguish "our anchor was ignored" from "the chain is unacceptable regardless":
+            // if trusting only our anchor succeeds, then keeping the system anchors alongside is
+            // what's rejecting this, rather than anything about the certificate itself.
+            if !extraAnchors.isEmpty {
+                SecTrustSetAnchorCertificatesOnly(serverTrust, true)
+                let anchorsOnlyWorks = SecTrustEvaluateWithError(serverTrust, nil)
+                onDiagnostic("with anchorCertificatesOnly=true it \(anchorsOnlyWorks ? "SUCCEEDS" : "still fails")")
+            }
+
             completionHandler(.cancelAuthenticationChallenge, nil)
             return
         }
 
         guard let certificateChain = SecTrustCopyCertificateChain(serverTrust) as? [SecCertificate] else {
-            print("Pinning: could not read the validated certificate chain")
+            onDiagnostic("could not read the validated certificate chain")
             completionHandler(.cancelAuthenticationChallenge, nil)
             return
         }
@@ -52,8 +68,8 @@ class PinningURLSessionDelegate: NSObject, URLSessionDelegate {
             }
         }
 
-        print("Pinning: no pinned key found in chain of \(certificateChain.count): " +
-              certificateChain.map { hashPublicKey(of: $0) ?? "<unreadable>" }.joined(separator: ", "))
+        onDiagnostic("no pinned key in chain of \(certificateChain.count): " +
+                     certificateChain.map { hashPublicKey(of: $0) ?? "<unreadable>" }.joined(separator: ", "))
         completionHandler(.cancelAuthenticationChallenge, nil)
     }
 
@@ -62,13 +78,13 @@ class PinningURLSessionDelegate: NSObject, URLSessionDelegate {
     /// and skipping it must not abandon the rest of the chain.
     private func hashPublicKey(of certificate: SecCertificate) -> String? {
         guard let publicKey = SecCertificateCopyKey(certificate) else {
-            print("Pinning: could not read public key from certificate")
+            onDiagnostic("could not read public key from certificate")
             return nil
         }
 
         var error: Unmanaged<CFError>?
         guard let publicKeyData = SecKeyCopyExternalRepresentation(publicKey, &error) as Data? else {
-            print("Pinning: could not export public key: \(error!.takeRetainedValue() as Error)")
+            onDiagnostic("could not export public key: \(error!.takeRetainedValue() as Error)")
             return nil
         }
 
