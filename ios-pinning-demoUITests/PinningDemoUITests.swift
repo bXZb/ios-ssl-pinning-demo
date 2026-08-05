@@ -8,7 +8,7 @@ import XCTest
 final class PinningDemoUITests: XCTestCase {
 
     // Every button, in the order they appear. Kept in sync with RequestViewModel by hand, and
-    // asserted to be exhaustive by testAllButtonsArePresent.
+    // so testAllButtonsArePresent also checks the counts match.
     static let unpinnedButtons = [
         "Plain HTTP",
         "HTTPS",
@@ -58,6 +58,12 @@ final class PinningDemoUITests: XCTestCase {
             XCTAssertTrue(button.waitForExistence(timeout: 5), "Missing button: \(name)")
             XCTAssertEqual(button.value as? String, "pending", "\(name) did not start pending")
         }
+
+        XCTAssertEqual(
+            app.buttons.count, Self.allButtons.count,
+            "The app has buttons this test doesn't know about - add them to the lists above, " +
+            "so that they're covered by testAllRequestsSucceed too"
+        )
     }
 
     /// Every request succeeds on an unintercepted device. Pinned buttons only go green if their
@@ -73,16 +79,16 @@ final class PinningDemoUITests: XCTestCase {
             button.tap()
         }
 
-        var failures: [String] = []
-        for name in Self.allButtons {
-            let button = app.buttons[name]
-            let succeeded = NSPredicate(format: "value == 'success'")
-            let expectation = XCTNSPredicateExpectation(predicate: succeeded, object: button)
-
-            if XCTWaiter().wait(for: [expectation], timeout: 60) != .completed {
-                failures.append("\(name) (ended as: \(button.value as? String ?? "unknown"))")
-            }
+        let succeeded = NSPredicate(format: "value == 'success'")
+        let expectations = Self.allButtons.map {
+            XCTNSPredicateExpectation(predicate: succeeded, object: app.buttons[$0])
         }
+        _ = XCTWaiter().wait(for: expectations, timeout: 60)
+
+        let failures = Self.allButtons
+            .map { ($0, app.buttons[$0].value as? String ?? "unknown") }
+            .filter { $0.1 != "success" }
+            .map { "\($0.0) (ended as: \($0.1))" }
 
         XCTAssertTrue(
             failures.isEmpty,

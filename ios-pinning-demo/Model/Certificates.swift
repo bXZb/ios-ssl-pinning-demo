@@ -2,19 +2,17 @@ import Foundation
 
 struct BundledCertificates {
 
-    // testserver.host's own CA. Its root is served in the chain and doesn't rotate (valid until
-    // 2056), but it isn't publicly trusted, so it's only usable where we can install it as a
-    // trust anchor ourselves.
-    static let testserverRootCert: SecCertificate = BundledCertificates.loadCertificate(filename: "testserver-root")
-
-    // The publicly trusted chain behind *.testserver.host. We keep both the root and the
-    // intermediate, and pin them by public key rather than by certificate, so that either being
-    // rotated or cross-signed doesn't break the pins - which is exactly what broke the previous
-    // Let's Encrypt ISRG X1 pins.
-    static let gtsRootR1Cert: SecCertificate = BundledCertificates.loadCertificate(filename: "gts-root-r1")
-    static let gtsIntermediateCert: SecCertificate = BundledCertificates.loadCertificate(filename: "gts-wr1")
-
-    static let publicChainCerts: [SecCertificate] = [gtsRootR1Cert, gtsIntermediateCert]
+    // The publicly trusted chain behind *.testserver.host, used by the evaluators that pin a
+    // certificate rather than a key hash.
+    //
+    // Both the root and the intermediate, because a certificate pin only matches if that exact
+    // certificate appears in the chain iOS built. The root is served cross-signed while the copy
+    // in the trust store is self-signed, so which of the two terminates the chain isn't ours to
+    // decide - but the intermediate is always in it either way.
+    static let publicChainCerts: [SecCertificate] = [
+        BundledCertificates.loadCertificate(filename: "gts-root-r1"),
+        BundledCertificates.loadCertificate(filename: "gts-wr1")
+    ]
 
     private static func loadCertificate(filename: String) -> SecCertificate {
         let filePath = Bundle.main.path(forResource: filename, ofType: "der")!

@@ -7,6 +7,7 @@
 ## User settings
 xcuserdata/
 *.xcresult
+xcodebuild.log
 
 ## Written by Xcode on open, and empty unless a workspace setting is actually changed
 WorkspaceSettings.xcsettings

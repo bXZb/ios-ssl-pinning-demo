@@ -1,9 +1,9 @@
 import SwiftUI
 
 struct ContentView: View {
-    
+
     @StateObject var viewModel = RequestViewModel()
-    
+
     let SPACING = 15.0
 
     var body: some View {
@@ -11,14 +11,14 @@ struct ContentView: View {
             Text("SSL Pinning Demo")
                 .font(.largeTitle)
                 .padding(.top)
-            
+
             GeometryReader { geometry in
                 ScrollView(.vertical) {
                     VStack(spacing: SPACING) {
                         ForEach(viewModel.unpinnedRequests) { request in
                             RequestButtonView(request: request, viewModel: viewModel)
                         }
-                        
+
                         Divider()
                             .background(Color.gray)
                             .padding(.horizontal)
@@ -40,9 +40,17 @@ struct ContentView: View {
 }
 
 struct RequestButtonView: View {
-    
+
     @ObservedObject var request: BaseHTTPRequest
     var viewModel: RequestViewModel
+
+    private var accessibilityStatus: String {
+        guard request.status == .failure, !request.diagnostics.isEmpty else {
+            return request.status.description
+        }
+
+        return "\(request.status.description): \(request.diagnostics)"
+    }
 
     var body: some View {
         Button(action: {
@@ -50,7 +58,7 @@ struct RequestButtonView: View {
         }) {
             HStack {
                 Spacer().frame(width: 16)
-                
+
                 if request.status == .success {
                     Image(systemName: "checkmark.circle")
                 } else if request.status == .failure {
@@ -69,17 +77,15 @@ struct RequestButtonView: View {
                 }
 
                 Spacer()
-                
+
                 // Matching placeholder, so we end up centered
                 Image(systemName: "circle").opacity(0)
                 Spacer().frame(width: 16)
             }
             .frame(maxWidth: .infinity, minHeight: 44)
         }
-        // The button's colour is the status for a human, but UI tests can't read colours, so we
-        // publish it as an accessibility value too:
         .accessibilityIdentifier(request.name)
-        .accessibilityValue(request.status.description)
+        .accessibilityValue(accessibilityStatus)
         .background(
             request.status == .none
                 ? Color.purple
