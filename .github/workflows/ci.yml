@@ -25,6 +25,7 @@ jobs:
           xcodebuild test \
             -project ios-pinning-demo.xcodeproj \
             -scheme ios-pinning-demo \
+            -sdk iphonesimulator \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -resultBundlePath TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO \
