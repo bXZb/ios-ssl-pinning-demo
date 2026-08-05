@@ -3,12 +3,13 @@ import Alamofire
 import TrustKit
 import AFNetworking
 
+@MainActor
 class BaseHTTPRequest: Identifiable, ObservableObject {
-    
-    let id = UUID()
+
+    nonisolated let id = UUID()
     let name: String
     let url: String
-    
+
     @Published var isLoading = false
     @Published var status: RequestStatus = .none
 
@@ -23,40 +24,30 @@ class BaseHTTPRequest: Identifiable, ObservableObject {
 
     func addDiagnostic(_ message: String) {
         print("\(name): \(message)")
-
-        DispatchQueue.main.async {
-            self.diagnostics += (self.diagnostics.isEmpty ? "" : " | ") + message
-        }
+        diagnostics += (diagnostics.isEmpty ? "" : " | ") + message
     }
 
     func run() async {
         URLCache.shared.removeAllCachedResponses()
 
-        DispatchQueue.main.async {
-            self.isLoading = true
-            self.status = .none
-            self.diagnostics = ""
-        }
+        isLoading = true
+        status = .none
+        diagnostics = ""
 
         do {
-            let status = try await performRequest()
+            let statusCode = try await performRequest()
 
-            if (status != 200) {
+            if (statusCode != 200) {
                 throw URLError(.badServerResponse)
             }
 
-            DispatchQueue.main.async {
-                self.status = .success
-                self.isLoading = false
-            }
+            status = .success
         } catch {
             addDiagnostic("failed with \(error)")
-
-            DispatchQueue.main.async {
-                self.isLoading = false
-                self.status = .failure
-            }
+            status = .failure
         }
+
+        isLoading = false
     }
     
     func performRequest() async throws -> Int {
@@ -73,6 +64,7 @@ class SimpleHTTPRequest: BaseHTTPRequest {
         urlRequest.cachePolicy = NSURLRequest.CachePolicy.reloadIgnoringLocalAndRemoteCacheData
 
         let session = buildSession()
+        defer { session.finishTasksAndInvalidate() }
 
         let (_, response) = try await session.data(for: urlRequest)
         return (response as! HTTPURLResponse).statusCode
@@ -95,7 +87,9 @@ class URLSessionPinnedRequest: SimpleHTTPRequest {
     override func buildSession() -> URLSession {
         let delegate = PinningURLSessionDelegate(
             pinnedKeyHashes: pinnedKeyHashes,
-            onDiagnostic: { [weak self] message in self?.addDiagnostic(message) }
+            onDiagnostic: { [weak self] message in
+                Task { @MainActor in self?.addDiagnostic(message) }
+            }
         )
         return URLSession(
             configuration: .default,
@@ -113,6 +107,14 @@ class AlamofireBaseHTTPRequest: BaseHTTPRequest {
     init(name: String, url: String, evaluators: [String: ServerTrustEvaluating]) {
         self.evaluators = evaluators
         super.init(name: name, url: url)
+    }
+
+    /// Alamofire keys its evaluators by host, which is the only part the pinned subclasses vary.
+    static func evaluators(
+        for url: String,
+        _ evaluator: ServerTrustEvaluating
+    ) -> [String: ServerTrustEvaluating] {
+        return [URL(string: url)!.host!: evaluator]
     }
     
     override func performRequest() async throws -> Int {
@@ -154,12 +156,12 @@ class AlamofirePinnedCertHTTPRequest: AlamofireBaseHTTPRequest {
     init(name: String, url: String, pinnedCertificates: [SecCertificate]) {
         // acceptSelfSignedCertificates would install these as the only trust anchors, so an
         // interception certificate would fail chain validation before the pin was ever compared.
-        let evaluators = [URL(string: url)!.host!: PinnedCertificatesTrustEvaluator(
+        let evaluators = Self.evaluators(for: url, PinnedCertificatesTrustEvaluator(
             certificates: pinnedCertificates,
             acceptSelfSignedCertificates: false,
             performDefaultValidation: true,
             validateHost: true
-        )]
+        ))
 
         super.init(name: name, url: url, evaluators: evaluators)
     }
@@ -169,18 +171,16 @@ class AlamofirePinnedCertHTTPRequest: AlamofireBaseHTTPRequest {
 class AlamofirePinnedPKHTTPRequest: AlamofireBaseHTTPRequest {
     
     init(name: String, url: String, pinnedKeys: [SecKey]) {
-        let evaluators = [URL(string: url)!.host!: PublicKeysTrustEvaluator(
+        let evaluators = Self.evaluators(for: url, PublicKeysTrustEvaluator(
             keys: pinnedKeys,
             performDefaultValidation: true,
             validateHost: true
-        )]
+        ))
 
         super.init(name: name, url: url, evaluators: evaluators)
     }
     
 }
-
-var trustKitInitialized = false
 
 class TrustKitPinnedHTTPRequest: SimpleHTTPRequest {
     
@@ -188,26 +188,27 @@ class TrustKitPinnedHTTPRequest: SimpleHTTPRequest {
         super.init(name: name, url: "https://\(TRUSTKIT_PINNED_HOST)")
     }
 
-    override func buildSession() -> URLSession {
-        // Initialize when first clicked:
-        if (!trustKitInitialized) {
-            TrustKit.initSharedInstance(withConfiguration: [
-                kTSKSwizzleNetworkDelegates: false,
-                kTSKEnforcePinning: true,
-                kTSKPinnedDomains: [
-                    TRUSTKIT_PINNED_HOST: [
-                        // TrustKit requires a backup pin, so we pin both the root and the
-                        // intermediate rather than padding the list with a dud:
-                        kTSKPublicKeyHashes: [
-                            GTS_ROOT_R1_SPKI_SHA256,
-                            GTS_INTERMEDIATE_SPKI_SHA256
-                        ]
+    // Runs once, on first use, without a mutable global to guard:
+    private static let initializeTrustKit: Void = {
+        TrustKit.initSharedInstance(withConfiguration: [
+            kTSKSwizzleNetworkDelegates: false,
+            kTSKEnforcePinning: true,
+            kTSKPinnedDomains: [
+                TRUSTKIT_PINNED_HOST: [
+                    // TrustKit requires a backup pin, so we pin both the root and the
+                    // intermediate rather than padding the list with a dud:
+                    kTSKPublicKeyHashes: [
+                        GTS_ROOT_R1_SPKI_SHA256,
+                        GTS_INTERMEDIATE_SPKI_SHA256
                     ]
                 ]
-            ])
-            trustKitInitialized = true
-        }
-        
+            ]
+        ])
+    }()
+
+    override func buildSession() -> URLSession {
+        _ = Self.initializeTrustKit
+
         return URLSession(
             configuration: .default,
             delegate: TrustKitURLSessionDelegate(),

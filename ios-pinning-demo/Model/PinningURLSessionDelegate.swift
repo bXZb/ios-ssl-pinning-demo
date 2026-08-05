@@ -1,22 +1,14 @@
 import Foundation
 import CryptoKit
 
-// Pinning done by hand, against the public key of any certificate in the chain.
-//
-// Note that this only works against a publicly trusted host. ATS evaluates the chain while
-// establishing the connection, and for a chain it doesn't trust it fails the handshake outright
-// without ever raising an authentication challenge - so a delegate like this never runs, and
-// cannot be used to trust a private CA. Doing that on iOS requires an ATS exception for the
-// domain, unlike Android, where the network security config can name an extra trust anchor.
+// Pinning done by hand, against the public key of any certificate in the chain. Only works
+// against a publicly trusted host.
 
 class PinningURLSessionDelegate: NSObject, URLSessionDelegate {
-    var pinnedKeyHashes: [String]
-    var onDiagnostic: (String) -> Void
+    let pinnedKeyHashes: [String]
+    let onDiagnostic: (String) -> Void
 
-    init(
-        pinnedKeyHashes: [String],
-        onDiagnostic: @escaping (String) -> Void = { print($0) }
-    ) {
+    init(pinnedKeyHashes: [String], onDiagnostic: @escaping (String) -> Void) {
         self.pinnedKeyHashes = pinnedKeyHashes
         self.onDiagnostic = onDiagnostic
     }
@@ -51,17 +43,24 @@ class PinningURLSessionDelegate: NSObject, URLSessionDelegate {
 
         // Walk from the anchor down to the leaf, so a pinned CA matches before we try to export
         // the leaf's key - not every key is exportable, see hashPublicKey below.
+        var chainHashes: [String] = []
+
         for serverCertificate in certificateChain.reversed() {
-            guard let publicKeyHash = hashPublicKey(of: serverCertificate) else { continue }
+            guard let publicKeyHash = hashPublicKey(of: serverCertificate) else {
+                chainHashes.append("<unreadable>")
+                continue
+            }
 
             if pinnedKeyHashes.contains(publicKeyHash) {
                 completionHandler(.useCredential, URLCredential(trust: serverTrust))
                 return
             }
+
+            chainHashes.append(publicKeyHash)
         }
 
         onDiagnostic("no pinned key in chain of \(certificateChain.count): " +
-                     certificateChain.map { hashPublicKey(of: $0) ?? "<unreadable>" }.joined(separator: ", "))
+                     chainHashes.joined(separator: ", "))
         completionHandler(.cancelAuthenticationChallenge, nil)
     }
 

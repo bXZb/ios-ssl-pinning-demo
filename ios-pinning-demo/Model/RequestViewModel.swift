@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 class RequestViewModel: ObservableObject {
     @Published var unpinnedRequests: [BaseHTTPRequest] = [
         SimpleHTTPRequest(name: "Plain HTTP", url: "http://\(UNPINNED_HOST)"),
@@ -58,14 +59,11 @@ class RequestViewModel: ObservableObject {
     }
 }
 
-enum RequestStatus: CustomStringConvertible {
-    case none, success, failure
+// The raw values are what the UI tests match on, via each button's accessibility value.
+enum RequestStatus: String, CustomStringConvertible {
+    case none = "pending"
+    case success
+    case failure
 
-    var description: String {
-        switch self {
-            case .none: return "pending"
-            case .success: return "success"
-            case .failure: return "failure"
-        }
-    }
+    var description: String { rawValue }
 }
