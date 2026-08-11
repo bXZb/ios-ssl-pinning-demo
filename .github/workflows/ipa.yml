@@ -1,0 +1,40 @@
+name: Build IPA (unsigned)
+
+on:
+  workflow_dispatch:      # 在 GitHub Actions 页面手动点"Run workflow"
+
+jobs:
+  build-ipa:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5
+
+      # 编译出未签名的 .app（越狱机 + AppSync 可直接安装）
+      - name: Build unsigned app
+        run: |
+          xcodebuild build \
+            -project ios-pinning-demo.xcodeproj \
+            -scheme ios-pinning-demo \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            2>&1 | xcbeautify
+
+      # 手动拼装 IPA：/Payload/<app>.app
+      - name: Package IPA
+        run: |
+          APP="$RUNNER_TEMP/DerivedData/Build/Products/Release-iphoneos/ios-pinning-demo.app"
+          cd "$RUNNER_TEMP"
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          # -y 保留软链接，SPM 动态框架在 .app 里就是软链接
+          zip -qry ios-pinning-demo.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-pinning-demo-unsigned-ipa
+          path: ${{ runner.temp }}/ios-pinning-demo.ipa
