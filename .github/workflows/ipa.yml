@@ -1,7 +1,7 @@
 name: Build IPA (unsigned)
 
 on:
-  workflow_dispatch:      # 在 GitHub Actions 页面手动点"Run workflow"
+  workflow_dispatch:
 
 jobs:
   build-ipa:
@@ -9,9 +9,35 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # 编译出未签名的 .app（越狱机 + AppSync 可直接安装）
+      # ① 解析 SPM 依赖，让 AFNetworking 源码落到 DerivedData，然后打补丁
+      - name: Resolve packages & patch AFNetworking
+        run: |
+          set -eo pipefail
+          xcodebuild -resolvePackageDependencies \
+            -project ios-pinning-demo.xcodeproj \
+            -scheme ios-pinning-demo \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            2>&1 | xcbeautify
+
+          # Xcode 26.4+ 把 netinet6/in6.h 划为私有头，禁止模块外 import；
+          # 这行是多余的（netinet/in.h 已传递包含），删掉不影响功能。
+          AFN_DIR="$RUNNER_TEMP/DerivedData/SourcePackages/checkouts/AFNetworking"
+          FILES=$(grep -rl 'netinet6/in6.h' "$AFN_DIR" || true)
+          if [ -n "$FILES" ]; then
+            echo "Patching AFNetworking (removing redundant private-header import):"
+            echo "$FILES"
+            echo "$FILES" | xargs sed -i '' '/#import.*netinet6\/in6.h/d'
+            echo "Remaining refs to netinet6/in6.h:"
+            grep -rn 'netinet6/in6.h' "$AFN_DIR" || echo "  (none)"
+          else
+            echo "WARNING: no AFNetworking file references netinet6/in6.h - nothing to patch."
+            echo "If the build later fails on AFNetworking, the library changed and this patch needs revisiting."
+          fi
+
+      # ② 编译未签名 .app；-disableAutomaticPackageResolution 保住上一步的补丁
       - name: Build unsigned app
         run: |
+          set -eo pipefail
           xcodebuild build \
             -project ios-pinning-demo.xcodeproj \
             -scheme ios-pinning-demo \
@@ -19,20 +45,25 @@ jobs:
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            -disableAutomaticPackageResolution \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             2>&1 | xcbeautify
 
-      # 手动拼装 IPA：/Payload/<app>.app
+      # ③ 打包 IPA（加存在性检查，杜绝再出空包）
       - name: Package IPA
         run: |
+          set -eo pipefail
           APP="$RUNNER_TEMP/DerivedData/Build/Products/Release-iphoneos/ios-pinning-demo.app"
+          test -d "$APP" || { echo "ERROR: .app not found at $APP"; exit 1; }
           cd "$RUNNER_TEMP"
+          rm -rf Payload ios-pinning-demo.ipa
           mkdir -p Payload
           cp -R "$APP" Payload/
-          # -y 保留软链接，SPM 动态框架在 .app 里就是软链接
           zip -qry ios-pinning-demo.ipa Payload
+          ls -lh ios-pinning-demo.ipa
 
+      # ④ 上传
       - name: Upload IPA
         uses: actions/upload-artifact@v7
         with:
