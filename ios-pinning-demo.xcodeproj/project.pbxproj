@@ -235,7 +235,7 @@
 			packageReferences = (
 				22B46E612B330D300031C568 /* XCRemoteSwiftPackageReference "Alamofire" */,
 				22F432462B335E3600866A21 /* XCRemoteSwiftPackageReference "TrustKit" */,
-				22F432512B336F2500866A21 /* XCRemoteSwiftPackageReference "AFNetworking" */,
+				AAF432512B336F2500866A21 /* XCLocalSwiftPackageReference "Vendor/AFNetworking" */,
 			);
 			productRefGroup = 226A67892B32016F0060DF1A /* Products */;
 			projectDirPath = "";
@@ -548,6 +548,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		AAF432512B336F2500866A21 /* XCLocalSwiftPackageReference "Vendor/AFNetworking" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Vendor/AFNetworking;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		22B46E612B330D300031C568 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -563,14 +570,6 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 3.0.7;
-			};
-		};
-		22F432512B336F2500866A21 /* XCRemoteSwiftPackageReference "AFNetworking" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/AFNetworking/AFNetworking.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 4.0.1;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -593,7 +592,7 @@
 		};
 		22F432522B336F2500866A21 /* AFNetworking */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 22F432512B336F2500866A21 /* XCRemoteSwiftPackageReference "AFNetworking" */;
+			package = AAF432512B336F2500866A21 /* XCLocalSwiftPackageReference "Vendor/AFNetworking" */;
 			productName = AFNetworking;
 		};
 /* End XCSwiftPackageProductDependency section */

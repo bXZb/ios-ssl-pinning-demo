@@ -19,6 +19,13 @@ jobs:
       - name: Show toolchain
         run: xcodebuild -version
 
+      - name: Guard AFNetworking private-header import
+        run: |
+          if grep -R --include='*.h' --include='*.m' 'netinet6/in6.h' Vendor/AFNetworking; then
+            echo "Vendored AFNetworking reintroduced the Xcode 26.4-private header"
+            exit 1
+          fi
+
       - name: Pick a simulator
         id: simulator
         run: |
