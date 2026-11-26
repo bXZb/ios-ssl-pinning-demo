@@ -1,0 +1,45 @@
+name: Build IPA (unsigned)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ipa:
+    # macos-15 上的 Xcode 最高是 26.3。AFNetworking 4.0.1 的
+    # <netinet6/in6.h> 从 Xcode 26.4 起才是私有头，这台镜像不用打补丁。
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build unsigned app
+        run: |
+          set -eo pipefail
+          xcodebuild build \
+            -project ios-pinning-demo.xcodeproj \
+            -scheme ios-pinning-demo \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            2>&1 | xcbeautify
+
+      - name: Package IPA
+        run: |
+          set -eo pipefail
+          APP="$RUNNER_TEMP/DerivedData/Build/Products/Release-iphoneos/ios-pinning-demo.app"
+          test -d "$APP" || { echo "ERROR: .app not found at $APP"; exit 1; }
+          cd "$RUNNER_TEMP"
+          rm -rf Payload ios-pinning-demo.ipa
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          # -y 保留软链接，SPM 动态框架在 .app 里就是软链接
+          zip -qry ios-pinning-demo.ipa Payload
+          ls -lh ios-pinning-demo.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-pinning-demo-unsigned-ipa
+          path: ${{ runner.temp }}/ios-pinning-demo.ipa
